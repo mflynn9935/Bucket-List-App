@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f2ec">
+<title>Bucket List</title>
+<style>
+:root{
+  --bg:#f7f2ec; --card:#fffdf9; --ink:#2f2a26; --muted:#7a726b;
+  --accent:#a77653; --line:#e7ddd3; --done:#5d7a61; --booked:#68648b;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  padding-bottom:90px;
+}
+header{
+  position:sticky;top:0;z-index:10;padding:18px 16px 12px;
+  background:rgba(247,242,236,.96);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+h1{margin:0;font-size:30px}
+.sub{color:var(--muted);font-size:13px;margin-top:3px}
+.wrap{max-width:860px;margin:auto;padding:14px}
+.status-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tab{
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:16px;padding:12px 8px;font-weight:800
+}
+.tab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.tab small{display:block;font-size:11px;font-weight:600;opacity:.75;margin-top:2px}
+.filter-title{font-size:12px;color:var(--muted);font-weight:800;margin:5px 0 8px;letter-spacing:.05em}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.filter{
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:16px;padding:11px;text-align:left;font-weight:750
+}
+.filter.active{background:var(--ink);color:white;border-color:var(--ink)}
+.filter small{display:block;font-size:11px;color:var(--muted);margin-top:2px;font-weight:500}
+.filter.active small{color:#ddd6cf}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}
+.sumrow{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:7px}
+.track{height:9px;background:#ebe1d7;border-radius:999px;overflow:hidden}
+.fill{height:100%;background:var(--done);width:0}
+.search{margin-bottom:12px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{
+  width:100%;border:1px solid var(--line);background:white;color:var(--ink);
+  border-radius:14px;padding:11px
+}
+button{border:0;border-radius:14px;padding:11px 13px;background:var(--accent);color:white;font-weight:750}
+button.secondary{background:#e9dfd6;color:var(--ink)}
+button.danger{background:#a65050}
+.list{display:grid;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px}
+.top{display:flex;gap:11px;align-items:flex-start}
+.emoji{font-size:32px;width:42px;text-align:center}
+.main{flex:1;min-width:0}
+.name{font-size:18px;font-weight:850}
+.goal{font-size:13px;color:var(--muted);margin-top:3px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:11px;background:#eee4da;padding:5px 8px;border-radius:999px}
+.badge{font-size:11px;padding:6px 8px;border-radius:999px;background:#eee4da;white-space:nowrap}
+.badge.booked{background:#e7e5f4;color:#4c486c}
+.badge.done{background:#dce8dd;color:#3b563d}
+.meta{font-size:13px;color:var(--muted);margin-top:8px}
+.memory{font-size:14px;margin-top:9px}
+.open{width:100%;margin-top:11px}
+.empty{
+  background:var(--card);border:1px dashed var(--line);border-radius:18px;
+  padding:28px 16px;text-align:center;color:var(--muted)
+}
+.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:5px}
+footer{
+  position:fixed;bottom:0;left:0;right:0;background:rgba(255,253,249,.97);
+  border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+  display:grid;grid-template-columns:1fr auto auto;gap:8px;z-index:20
+}
+dialog{
+  width:min(94vw,720px);max-height:90vh;overflow:auto;border:0;border-radius:22px;
+  padding:0;background:var(--card);color:var(--ink)
+}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.modal{padding:18px}
+.mhead{display:flex;align-items:center;gap:10px}
+.mhead h2{margin:0;flex:1}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;font-size:12px;color:var(--muted);margin:11px 0 5px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.check{display:flex;align-items:center;gap:7px;background:#f1e9e1;padding:9px;border-radius:12px;font-size:13px;color:var(--ink)}
+.check input{width:auto}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:7px}
+.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:11px}
+.actions{display:flex;gap:8px;margin-top:15px}
+.actions button{flex:1}
+.note{font-size:11px;color:var(--muted);margin-top:6px}
+@media(min-width:700px){
+  .filters{grid-template-columns:repeat(4,1fr)}
+  .list{grid-template-columns:1fr 1fr}
+  .checks{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bucket List</h1>
+  <div class="sub">Dream it. Book it. Do it. Keep the memory.</div>
+</header>
+
+<div class="wrap">
+  <div class="status-tabs">
+    <button class="tab active" data-status="dream">💭 Dreaming<small id="dreamCount"></small></button>
+    <button class="tab" data-status="booked">📅 Booked<small id="bookedCount"></small></button>
+    <button class="tab" data-status="done">❤️ Complete<small id="doneCount"></small></button>
+  </div>
+
+  <div class="filter-title">FILTER</div>
+  <div id="filters" class="filters"></div>
+
+  <div class="summary">
+    <div class="sumrow"><span>Overall progress</span><span id="progressText"></span></div>
+    <div class="track"><div id="progressBar" class="fill"></div></div>
+  </div>
+
+  <div class="search"><input id="search" placeholder="Search your bucket list…"></div>
+  <div id="list" class="list"></div>
+</div>
+
+<footer>
+  <button id="add">＋ Add</button>
+  <button id="importBtn" class="secondary">Import</button>
+  <button id="backupBtn" class="secondary">Backup</button>
+  <input id="importFile" type="file" accept=".json,application/json" hidden>
+</footer>
+
+<dialog id="editor">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="modalTitle">Bucket item</h2>
+      <button id="close" class="secondary">Close</button>
+    </div>
+    <input id="editId" type="hidden">
+
+    <div class="row">
+      <div><label>Emoji</label><input id="emoji" maxlength="6" placeholder="✨"></div>
+      <div><label>Status</label>
+        <select id="status">
+          <option value="dream">💭 Dreaming</option>
+          <option value="booked">📅 Booked</option>
+          <option value="done">❤️ Complete</option>
+        </select>
+      </div>
+    </div>
+
+    <label>What do you want to do?</label>
+    <input id="name" placeholder="Feed a giraffe">
+
+    <label>What would make it count?</label>
+    <input id="goal" placeholder="Hand-feed and interact with one">
+
+    <label>Filters <span class="note">(choose as many as fit)</span></label>
+    <div id="filterChecks" class="checks"></div>
+
+    <div class="row">
+      <div><label>Booked date</label><input id="bookedDate" type="date"></div>
+      <div><label>Completed date</label><input id="completedDate" type="date"></div>
+    </div>
+
+    <label>Where</label>
+    <input id="place" placeholder="Place, city, restaurant, zoo…">
+
+    <label>Link</label>
+    <input id="link" type="url" placeholder="https://…">
+
+    <label>Who with</label>
+    <input id="withWho" placeholder="Solo, friend, family…">
+
+    <label>Rating</label>
+    <select id="rating">
+      <option value="">Not rated</option>
+      <option value="5">★★★★★</option>
+      <option value="4">★★★★</option>
+      <option value="3">★★★</option>
+      <option value="2">★★</option>
+      <option value="1">★</option>
+    </select>
+
+    <label>Memory / notes</label>
+    <textarea id="memory" rows="4" placeholder="What happened? What was the best part?"></textarea>
+
+    <label>Photos</label>
+    <input id="photoInput" type="file" accept="image/*" multiple>
+    <div id="photos" class="photos"></div>
+    <div class="note">Your data stays on this device. Use Backup before changing phones or clearing browser data.</div>
+
+    <div class="actions">
+      <button id="save">Save</button>
+      <button id="delete" class="danger">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const KEY='bucket_list_app_final';
+const FILTERS=[
+  ['all','✨ All'],
+  ['animals','🐾 Animal Encounters'],
+  ['travel','🌎 Travel & Experiences'],
+  ['food','🍴 Food'],
+  ['education','📚 Education & DIY'],
+  ['garden','🌱 Gardening & Plants'],
+  ['rocks','🪨 Rockhounding']
+];
+
+const STARTER=[
+['🦒','Giraffe','Hand-feed + touch'],
+['🐘','Elephant','Feed + touch + husbandry/bathing'],
+['🐺','Wolves','Touch + close interaction'],
+['🦁','Big cats','Lions, tigers, leopards and other big cats'],
+['🐈','Small wild cats','Serval, caracal, lynx, bobcat and more'],
+['🦦','Otters','Loose interaction; lap contact is the dream'],
+['🦭','Sea lions / seals','Feed + training + touch'],
+['🐧','Penguins','Feed + direct interaction'],
+['🦈','Sharks','Touch or personally feed'],
+['🐋','Whales','Beluga or whale direct interaction'],
+['🦓','Zebras','Feed at close range'],
+['🐙','Octopus','Direct interaction or feeding'],
+['🦏','Rhinos','Touch + feed'],
+['🦛','Hippos','Feed; pygmy and common hippo goals'],
+['🐫','Camels','Feed + pet'],
+['🦌','Elk','Feed + touch'],
+['🫎','Moose','Feed + close interaction'],
+['🦌','Reindeer','Feed + pet'],
+['🦘','Kangaroos','Walk-through + feed/pet'],
+['🦊','Foxes','Pet + feed + direct interaction']
+];
+
+let activeStatus='dream';
+let activeFilter='all';
+let items=load();
+
+const $=id=>document.getElementById(id);
+function uid(){return (crypto.randomUUID&&crypto.randomUUID())||String(Date.now()+Math.random())}
+function starter(){
+  return STARTER.map(x=>({
+    id:uid(),emoji:x[0],name:x[1],goal:x[2],status:'dream',filters:['animals'],
+    bookedDate:'',completedDate:'',place:'',link:'',withWho:'',rating:'',memory:'',photos:[]
+  }))
+}
+function load(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(Array.isArray(saved)) return saved;
+  }catch(e){}
+  const seeded=starter();
+  localStorage.setItem(KEY,JSON.stringify(seeded));
+  return seeded;
+}
+function persist(){localStorage.setItem(KEY,JSON.stringify(items))}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function labelFor(k){return FILTERS.find(x=>x[0]===k)?.[1]||k}
+function countFilter(k){return k==='all'?items.length:items.filter(x=>(x.filters||[]).includes(k)).length}
+
+function renderFilters(){
+  $('filters').innerHTML='';
+  FILTERS.forEach(([k,label])=>{
+    const b=document.createElement('button');
+    b.className='filter'+(activeFilter===k?' active':'');
+    const count=countFilter(k);
+    b.innerHTML=`${label}<small>${count} item${count===1?'':'s'}</small>`;
+    b.onclick=()=>{activeFilter=k;render()};
+    $('filters').appendChild(b);
+  });
+}
+
+function render(){
+  renderFilters();
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.status===activeStatus));
+  const q=$('search').value.toLowerCase().trim();
+  const visible=items.filter(x=>{
+    const s=x.status===activeStatus;
+    const f=activeFilter==='all'||(x.filters||[]).includes(activeFilter);
+    const hay=`${x.name} ${x.goal} ${x.place} ${x.memory}`.toLowerCase();
+    return s&&f&&(!q||hay.includes(q));
+  });
+
+  $('list').innerHTML='';
+  if(!visible.length){
+    $('list').innerHTML='<div class="empty"><b>Nothing here yet.</b>Tap “Add” whenever you find something worth doing.</div>';
+  }
+
+  visible.forEach(x=>{
+    const c=document.createElement('div');
+    c.className='card';
+    const badge=x.status==='done'?'Complete':x.status==='booked'?'Booked':'Dreaming';
+    c.innerHTML=`
+      <div class="top">
+        <div class="emoji">${x.emoji||'✨'}</div>
+        <div class="main">
+          <div class="name">${esc(x.name)}</div>
+          ${x.goal?`<div class="goal">${esc(x.goal)}</div>`:''}
+          <div class="tags">${(x.filters||[]).map(f=>`<span class="tag">${esc(labelFor(f))}</span>`).join('')}</div>
+        </div>
+        <span class="badge ${x.status}">${badge}</span>
+      </div>
+      ${x.place?`<div class="meta">📍 ${esc(x.place)}</div>`:''}
+      ${x.status==='booked'&&x.bookedDate?`<div class="meta">📅 ${esc(x.bookedDate)}</div>`:''}
+      ${x.status==='done'&&x.completedDate?`<div class="meta">❤️ ${esc(x.completedDate)}</div>`:''}
+      ${x.rating?`<div class="meta">${'★'.repeat(Number(x.rating))}</div>`:''}
+      ${x.memory?`<div class="memory">${esc(x.memory).slice(0,160)}${x.memory.length>160?'…':''}</div>`:''}
+      <button class="open">Open</button>`;
+    c.querySelector('.open').onclick=()=>openEditor(x.id);
+    $('list').appendChild(c);
+  });
+
+  const d=items.filter(x=>x.status==='dream').length;
+  const b=items.filter(x=>x.status==='booked').length;
+  const c=items.filter(x=>x.status==='done').length;
+  $('dreamCount').textContent=`${d} items`;
+  $('bookedCount').textContent=`${b} items`;
+  $('doneCount').textContent=`${c} items`;
+  $('progressText').textContent=`${c} of ${items.length} complete`;
+  $('progressBar').style.width=(items.length?Math.round(c/items.length*100):0)+'%';
+}
+
+function buildChecks(selected=[]){
+  $('filterChecks').innerHTML='';
+  FILTERS.filter(x=>x[0]!=='all').forEach(([k,label])=>{
+    const l=document.createElement('label');
+    l.className='check';
+    l.innerHTML=`<input type="checkbox" value="${k}" ${selected.includes(k)?'checked':''}> <span>${label}</span>`;
+    $('filterChecks').appendChild(l);
+  });
+}
+
+function showPhotos(arr=[]){
+  $('photos').innerHTML='';
+  $('photos').dataset.current=JSON.stringify(arr);
+  arr.forEach(src=>{
+    const img=document.createElement('img');
+    img.src=src;
+    $('photos').appendChild(img);
+  });
+}
+
+function openEditor(id){
+  const x=items.find(i=>i.id===id);
+  if(!x)return;
+  $('editId').value=x.id;
+  $('emoji').value=x.emoji||'';
+  $('name').value=x.name||'';
+  $('goal').value=x.goal||'';
+  $('status').value=x.status||'dream';
+  $('bookedDate').value=x.bookedDate||'';
+  $('completedDate').value=x.completedDate||'';
+  $('place').value=x.place||'';
+  $('link').value=x.link||'';
+  $('withWho').value=x.withWho||'';
+  $('rating').value=x.rating||'';
+  $('memory').value=x.memory||'';
+  $('modalTitle').textContent=x.name||'Bucket item';
+  buildChecks(x.filters||[]);
+  showPhotos(x.photos||[]);
+  $('delete').style.display='block';
+  $('editor').showModal();
+}
+
+function newItem(){
+  $('editId').value='';
+  ['emoji','name','goal','bookedDate','completedDate','place','link','withWho','memory'].forEach(id=>$(id).value='');
+  $('status').value=activeStatus;
+  $('rating').value='';
+  buildChecks(activeFilter==='all'?[]:[activeFilter]);
+  showPhotos([]);
+  $('modalTitle').textContent='Add to bucket list';
+  $('delete').style.display='none';
+  $('editor').showModal();
+}
+
+$('photoInput').onchange=async e=>{
+  const files=[...e.target.files].slice(0,8);
+  const arr=await Promise.all(files.map(f=>new Promise(res=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.readAsDataURL(f);
+  })));
+  showPhotos(arr);
+};
+
+$('save').onclick=()=>{
+  const id=$('editId').value;
+  const existing=items.find(x=>x.id===id);
+  const filters=[...$('filterChecks').querySelectorAll('input:checked')].map(x=>x.value);
+  const obj={
+    id:id||uid(),
+    emoji:$('emoji').value||'✨',
+    name:$('name').value||'Untitled',
+    goal:$('goal').value,
+    status:$('status').value,
+    filters,
+    bookedDate:$('bookedDate').value,
+    completedDate:$('completedDate').value,
+    place:$('place').value,
+    link:$('link').value,
+    withWho:$('withWho').value,
+    rating:$('rating').value,
+    memory:$('memory').value,
+    photos:JSON.parse($('photos').dataset.current||'[]')
+  };
+  if(existing)Object.assign(existing,obj);else items.push(obj);
+  persist();$('editor').close();render();
+};
+
+$('delete').onclick=()=>{
+  const id=$('editId').value;
+  if(confirm('Delete this bucket list item?')){
+    items=items.filter(x=>x.id!==id);persist();$('editor').close();render();
+  }
+};
+
+$('close').onclick=()=>$('editor').close();
+$('add').onclick=newItem;
+$('search').oninput=render;
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{activeStatus=b.dataset.status;render()});
+
+$('backupBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify({version:1,items},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='bucket-list-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{
+  try{
+    const text=await e.target.files[0].text();
+    const parsed=JSON.parse(text);
+    const incoming=Array.isArray(parsed)?parsed:parsed.items;
+    if(!Array.isArray(incoming))throw Error();
+    if(confirm('Replace this device’s bucket list with this backup?')){
+      items=incoming;persist();render();alert('Backup restored.');
+    }
+  }catch{
+    alert('That backup file could not be read.');
+  }
+};
+
+render();
+</script>
+</body>
+</html>
